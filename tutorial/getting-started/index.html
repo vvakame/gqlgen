@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+<head >
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9"/>
+	<meta name="description" content="graphql servers the easy way">
+
+	<title>Getting Started &mdash; gqlgen</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Quicksand:400,700|Space+Mono|VT323" rel="stylesheet">
+	<link rel="stylesheet" href="https://example.org/main.css" type="text/css"/>
+	<link rel="stylesheet" href="https://example.org/syntax.css" type="text/css"/>
+</head>
+
+<body>
+	<nav>
+	<div class="logo" href="https://example.org/">gqlgen</div>
+
+	<ul class="menu">
+	
+		<li>
+			
+				<a href="/introduction/">Introduction</a>
+			
+		</li>
+		<li>
+			
+				<span>Tutorials</span>
+			
+			<ul class="submenu">
+				<li>
+					
+						<a href="/tutorial/getting-started/">Getting Started</a>
+					
+				</li>
+			</ul>
+		</li>
+	</ul>
+</nav>
+
+    
+    <header>
+        <h1>Getting Started</h1>
+        <span class="description">Creating a todo graphql server in golang</span>
+    </header>
+
+    <main>
+        
+
+<h2 id="goal">Goal</h2>
+
+<p>The aim for this tutorial is to build a &ldquo;todo&rdquo; graphql server that can:</p>
+
+<ul>
+<li>get a list of all todos</li>
+<li>create new todos</li>
+<li>mark off todos as they are completed</li>
+</ul>
+
+<h2 id="install-gqlgen">Install gqlgen</h2>
+
+<p>Assuming you already have a working <a href="https://golang.org/doc/install">go environment</a> you can simply go get:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sh" data-lang="sh">go get github.com/vektah/gqlgen</code></pre></div>
+<h2 id="define-the-schema">Define the schema</h2>
+
+<p>gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql
+<a href="http://graphql.org/learn/schema/">Schema Definition Language</a>. This usually goes into a file called schema.graphql</p>
+<div class="highlight"><pre class="chroma"><code class="language-graphql" data-lang="graphql">type Todo {
+  id: ID!
+  text: String!
+  done: Boolean!
+  user: User!
+}
+
+type User {
+    id: ID!
+    name: String!
+}
+
+type Query {
+  todos: [Todo!]!
+}
+
+type Mutation {
+  createTodo(text: String!): Todo!
+}</code></pre></div>
+<h2 id="generate-the-bindings">Generate the bindings</h2>
+
+<p>Now that we have defined the shape of our data, and what actions can be taken we can ask gqlgen to convert the schema into code:</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gqlgen -out generated.go -package main</code></pre></div>
+<p>gqlgen should have created two new files <code>generated.go</code> and <code>models_gen.go</code>. If we take a peek in both we can see what the server has generated:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// generated.go
+</span><span class="c1"></span><span class="kd">func</span> <span class="nx">MakeExecutableSchema</span><span class="p">(</span><span class="nx">resolvers</span> <span class="nx">Resolvers</span><span class="p">)</span> <span class="nx">graphql</span><span class="p">.</span><span class="nx">ExecutableSchema</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">executableSchema</span><span class="p">{</span><span class="nx">resolvers</span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">Resolvers</span> <span class="kd">interface</span> <span class="p">{</span>
+	<span class="nx">Mutation_createTodo</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">text</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Todo</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+	<span class="nx">Query_todos</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">([]</span><span class="nx">Todo</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+	<span class="nx">Todo_user</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">it</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">// models_gen.go
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">Todo</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>     <span class="kt">string</span>
+	<span class="nx">Text</span>   <span class="kt">string</span>
+	<span class="nx">Done</span>   <span class="kt">bool</span>
+	<span class="nx">UserID</span> <span class="kt">string</span>
+<span class="p">}</span>
+
+<span class="kd">type</span> <span class="nx">User</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>   <span class="kt">string</span>
+	<span class="nx">Name</span> <span class="kt">string</span>
+<span class="p">}</span></code></pre></div>
+<p><strong>Note</strong>: ctx here is the golang context.Context, its used to pass per-request context like url params, tracing
+information, cancellation, and also the current selection set. This makes it more like the <code>info</code> argument in
+<code>graphql-js</code>. Because the caller will create an object to satisfy the interface, they can inject any dependencies in
+directly.</p>
+
+<h2 id="write-the-resolvers">Write the resolvers</h2>
+
+<p>Finally, we get to write some code!</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// main.go
+</span><span class="c1"></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;context&#34;</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+	<span class="s">&#34;math/rand&#34;</span>
+	<span class="s">&#34;net/http&#34;</span>
+
+	<span class="s">&#34;github.com/vektah/gqlgen/handler&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">MyApp</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">todos</span> <span class="p">[]</span><span class="nx">Todo</span>
+<span class="p">}</span>
+ 
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">MyApp</span><span class="p">)</span> <span class="nx">Query_todos</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">([]</span><span class="nx">Todo</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nx">todos</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">MyApp</span><span class="p">)</span> <span class="nx">Mutation_createTodo</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">text</span> <span class="kt">string</span><span class="p">)</span> <span class="p">(</span><span class="nx">Todo</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">todo</span> <span class="o">:=</span> <span class="nx">Todo</span><span class="p">{</span>
+		<span class="nx">Text</span><span class="p">:</span>   <span class="nx">text</span><span class="p">,</span>
+		<span class="nx">ID</span><span class="p">:</span>     <span class="nx">fmt</span><span class="p">.</span><span class="nx">Sprintf</span><span class="p">(</span><span class="s">&#34;T%d&#34;</span><span class="p">,</span> <span class="nx">rand</span><span class="p">.</span><span class="nx">Int</span><span class="p">()),</span>
+		<span class="nx">UserID</span><span class="p">:</span> <span class="nx">fmt</span><span class="p">.</span><span class="nx">Sprintf</span><span class="p">(</span><span class="s">&#34;U%d&#34;</span><span class="p">,</span> <span class="nx">rand</span><span class="p">.</span><span class="nx">Int</span><span class="p">()),</span>
+	<span class="p">}</span>
+	<span class="nx">a</span><span class="p">.</span><span class="nx">todos</span> <span class="p">=</span> <span class="nb">append</span><span class="p">(</span><span class="nx">a</span><span class="p">.</span><span class="nx">todos</span><span class="p">,</span> <span class="nx">todo</span><span class="p">)</span>
+	<span class="k">return</span> <span class="nx">todo</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">MyApp</span><span class="p">)</span> <span class="nx">Todo_user</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">it</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">User</span><span class="p">{</span><span class="nx">ID</span><span class="p">:</span> <span class="nx">it</span><span class="p">.</span><span class="nx">UserID</span><span class="p">,</span> <span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;user &#34;</span> <span class="o">+</span> <span class="nx">it</span><span class="p">.</span><span class="nx">UserID</span><span class="p">},</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
+	<span class="nx">app</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">MyApp</span><span class="p">{</span>
+		<span class="nx">todos</span><span class="p">:</span> <span class="p">[]</span><span class="nx">Todo</span><span class="p">{},</span> <span class="c1">// this would normally be a reference to the db
+</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">Playground</span><span class="p">(</span><span class="s">&#34;Todo&#34;</span><span class="p">,</span> <span class="s">&#34;/query&#34;</span><span class="p">))</span>
+	<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">&#34;/query&#34;</span><span class="p">,</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">GraphQL</span><span class="p">(</span><span class="nx">MakeExecutableSchema</span><span class="p">(</span><span class="nx">app</span><span class="p">)))</span>
+
+	<span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&#34;Listening on :8080&#34;</span><span class="p">)</span>
+	<span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">ListenAndServe</span><span class="p">(</span><span class="s">&#34;:8080&#34;</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
+<span class="p">}</span></code></pre></div>
+<p>We now have a working server, to start it:</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">go run *.go</code></pre></div>
+<p>then open <a href="http://localhost:8080">http://localhost:8080</a> in a browser. here are some queries to try:</p>
+<div class="highlight"><pre class="chroma"><code class="language-graphql" data-lang="graphql">mutation createTodo {
+  createTodo(text:&#34;test&#34;) {
+    user {
+      id
+    }
+    text
+    done
+  }
+}
+
+query findTodos {
+  todos {
+    text
+    done
+    user {
+      name
+    }
+  }
+}</code></pre></div>
+<h2 id="customizing-the-models">Customizing the models</h2>
+
+<p>Generated models are nice to get moving quickly, but you probably want control over them at some point. To do that
+create a types.json, eg:</p>
+<div class="highlight"><pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+  <span class="nt">&#34;Todo&#34;</span><span class="p">:</span> <span class="s2">&#34;github.com/vektah/gettingstarted.Todo&#34;</span>
+<span class="p">}</span></code></pre></div>
+<p>and create the model yourself:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">Todo</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>     <span class="kt">string</span>
+	<span class="nx">Text</span>   <span class="kt">string</span>
+	<span class="nx">done</span>   <span class="kt">bool</span>
+	<span class="nx">userID</span> <span class="kt">string</span> <span class="c1">// I&#39;ve made userID private now.
+</span><span class="c1"></span><span class="p">}</span>
+
+<span class="c1">// lets define a getter too. it could also return an error if we needed. 
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="nx">Todo</span><span class="p">)</span> <span class="nx">Done</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">done</span>
+<span class="p">}</span> </code></pre></div>
+<p>then regenerate, this time specifying the type map:</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gqlgen -out generated.go -package main -typemap types.json</code></pre></div>
+<p>gqlgen will look at the user defined types and match the fields up finding fields and functions by matching names.</p>
+
+<h2 id="finishing-touches">Finishing touches</h2>
+
+<p>gqlgen is still unstable, and the APIs may change at any time. To prevent changes from ruining your day make sure
+to lock your dependencies:</p>
+
+<p><em>Note</em>: If you dont have dep installed yet, you can get it <a href="https://github.com/golang/dep">here</a></p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">dep init
+dep ensure
+go get github.com/vektah/gorunpkg</code></pre></div>
+<p>at the top of our main.go:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">//go:generate gorunpkg github.com/vektah/gqlgen -typemap types.json -out generated.go -package main
+</span><span class="c1"></span>
+<span class="kn">package</span> <span class="nx">main</span></code></pre></div>
+<p><strong>Note:</strong> be careful formatting this, there must no space between the <code>//</code> and <code>go:generate</code>, and one empty line
+between it and the <code>package main</code>.</p>
+
+<p>This magic comment tells <code>go generate</code> what command to run when we want to regenerate our code. to do so run:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="k">go</span> <span class="nx">generate</span> <span class="p">.</span><span class="o">/</span><span class="p">..</span></code></pre></div>
+<p><em>gorunpkg</em> will build and run the version of gqlgen we just installed into vendor with dep. This makes sure
+that everyone working on your project generates code the same way regardless which binaries are installed in their gopath.</p>
+
+    </main>
+
+	<footer>
+	&copy; 2018 <a href="https://github.com/vektah">Adam Scarr</a>
+	</footer>
+</body>
+</html>
