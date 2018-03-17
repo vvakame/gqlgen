@@ -1,25 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>gqlgen</title>
+    <title>Introduction on gqlgen</title>
     <link>https://vektah.github.io/gqlgen/</link>
-    <description>Recent content on gqlgen</description>
+    <description>Recent content in Introduction on gqlgen</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Sat, 17 Mar 2018 13:06:47 +1100</lastBuildDate>
     
 	<atom:link href="https://vektah.github.io/gqlgen/index.xml" rel="self" type="application/rss+xml" />
     
-    
-    <item>
-      <title>Introduction</title>
-      <link>https://vektah.github.io/gqlgen/introduction/</link>
-      <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
-      
-      <guid>https://vektah.github.io/gqlgen/introduction/</guid>
-      <description>What is gqlgen? gqlgen is golang library for building graphql servers without any fuss. gqlgen is:
- Schema first: You define your API using the graphql Schema Definition Language Type safe: You should never see map[string]interface{} here. Codegen: Let us generate the boring bits, so you can build your app quickly.  Getting started First take a look at the Getting Started tutorial.
-If you cant find what your looking for, maybe the examples will help.</description>
-    </item>
     
     <item>
       <title>Getting Started</title>

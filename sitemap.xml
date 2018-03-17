@@ -3,8 +3,8 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://vektah.github.io/gqlgen/introduction/</loc>
-    <lastmod>2018-03-17T20:16:55+11:00</lastmod>
+    <loc>https://vektah.github.io/gqlgen/</loc>
+    <lastmod>2018-03-17T13:06:47+11:00</lastmod>
   </url>
   
   <url>
@@ -24,12 +24,6 @@
   
   <url>
     <loc>https://vektah.github.io/gqlgen/tutorial/</loc>
-    <lastmod>2018-03-17T20:16:55+11:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://vektah.github.io/gqlgen/</loc>
     <lastmod>2018-03-17T20:16:55+11:00</lastmod>
     <priority>0</priority>
   </url>
