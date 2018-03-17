@@ -154,6 +154,12 @@ ul.submenu {
     text-align: center;
     margin-top: .2em;
     margin-bottom: 1em;
+    border-bottom: none;
+    display:block;
+}
+
+.logo:hover {
+    border-bottom: none;
 }
 
 code {

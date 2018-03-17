@@ -2,20 +2,20 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>gqlgen</title>
-    <link>https://example.org/</link>
+    <link>https://vektah.github.io/gqlgen/</link>
     <description>Recent content on gqlgen</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Sat, 17 Mar 2018 13:06:47 +1100</lastBuildDate>
     
-	<atom:link href="https://example.org/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://vektah.github.io/gqlgen/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Introduction</title>
-      <link>https://example.org/introduction/</link>
+      <link>https://vektah.github.io/gqlgen/introduction/</link>
       <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
       
-      <guid>https://example.org/introduction/</guid>
+      <guid>https://vektah.github.io/gqlgen/introduction/</guid>
       <description>What is gqlgen? gqlgen is golang library for building graphql servers without any fuss. gqlgen is:
  Schema first: You define your API using the graphql Schema Definition Language Type safe: You should never see map[string]interface{} here. Codegen: Let us generate the boring bits, so you can build your app quickly.  Getting started First take a look at the Getting Started tutorial.
 If you cant find what your looking for, maybe the examples will help.</description>
@@ -23,10 +23,10 @@ If you cant find what your looking for, maybe the examples will help.</descripti
     
     <item>
       <title>Getting Started</title>
-      <link>https://example.org/tutorial/getting-started/</link>
+      <link>https://vektah.github.io/gqlgen/tutorial/getting-started/</link>
       <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
       
-      <guid>https://example.org/tutorial/getting-started/</guid>
+      <guid>https://vektah.github.io/gqlgen/tutorial/getting-started/</guid>
       <description>Goal The aim for this tutorial is to build a &amp;ldquo;todo&amp;rdquo; graphql server that can:
  get a list of all todos create new todos mark off todos as they are completed  Install gqlgen Assuming you already have a working go environment you can simply go get:
 go get github.com/vektah/gqlgen Define the schema gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql Schema Definition Language.</description>

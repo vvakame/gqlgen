@@ -3,33 +3,33 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://example.org/introduction/</loc>
+    <loc>https://vektah.github.io/gqlgen/introduction/</loc>
     <lastmod>2018-03-17T20:16:55+11:00</lastmod>
   </url>
   
   <url>
-    <loc>https://example.org/tutorial/getting-started/</loc>
+    <loc>https://vektah.github.io/gqlgen/tutorial/getting-started/</loc>
     <lastmod>2018-03-17T20:16:55+11:00</lastmod>
   </url>
   
   <url>
-    <loc>https://example.org/categories/</loc>
+    <loc>https://vektah.github.io/gqlgen/categories/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.org/tags/</loc>
+    <loc>https://vektah.github.io/gqlgen/tags/</loc>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.org/tutorial/</loc>
+    <loc>https://vektah.github.io/gqlgen/tutorial/</loc>
     <lastmod>2018-03-17T20:16:55+11:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://example.org/</loc>
+    <loc>https://vektah.github.io/gqlgen/</loc>
     <lastmod>2018-03-17T20:16:55+11:00</lastmod>
     <priority>0</priority>
   </url>
