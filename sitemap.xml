@@ -4,7 +4,12 @@
   
   <url>
     <loc>https://vektah.github.io/gqlgen/</loc>
-    <lastmod>2018-03-17T13:06:47+11:00</lastmod>
+    <lastmod>2018-03-17T20:16:55+11:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://vektah.github.io/gqlgen/reference/scalars/</loc>
+    <lastmod>2018-03-17T21:05:43+11:00</lastmod>
   </url>
   
   <url>
@@ -14,6 +19,12 @@
   
   <url>
     <loc>https://vektah.github.io/gqlgen/categories/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://vektah.github.io/gqlgen/reference/</loc>
+    <lastmod>2018-03-17T21:05:43+11:00</lastmod>
     <priority>0</priority>
   </url>
   

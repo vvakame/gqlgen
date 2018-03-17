@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head >
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9"/>
+	<meta name="description" content="graphql servers the easy way">
+
+	<title>Custom Scalars &mdash; gqlgen</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Quicksand:400,700|Space+Mono|VT323" rel="stylesheet">
+	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/main.css" type="text/css"/>
+	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/syntax.css" type="text/css"/>
+</head>
+
+<body>
+	<nav>
+	<a class="logo" href="http://github.com/vektah/gqlgen">gqlgen</a>
+
+	<ul class="menu">
+	
+		<li>
+			
+				<a href="/gqlgen/">Introduction</a>
+			
+		</li>
+		<li>
+			
+				<span>Tutorials</span>
+			
+			<ul class="submenu">
+				<li>
+					
+						<a href="/gqlgen/tutorial/getting-started/">Getting Started</a>
+					
+				</li>
+			</ul>
+		</li>
+		<li>
+			
+				<span>Reference</span>
+			
+			<ul class="submenu">
+				<li>
+					
+						<a href="/gqlgen/reference/scalars/">Custom Scalars</a>
+					
+				</li>
+			</ul>
+		</li>
+	</ul>
+</nav>
+
+    
+    <header>
+        <h1>Custom Scalars</h1>
+        <span class="description">Using custom graphql types in golang</span>
+    </header>
+
+    <main>
+        
+
+<p>There are two different ways to implement scalars in gqlgen, depending on your need.</p>
+
+<h2 id="with-user-defined-types">With user defined types</h2>
+
+<p>For user defined types you can implement the graphql.Marshal and graphql.Unmarshal interfaces and they will be called.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">mypkg</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;io&#34;</span>
+	<span class="s">&#34;strings&#34;</span>
+<span class="p">)</span>
+
+<span class="kd">type</span> <span class="nx">YesNo</span> <span class="kt">bool</span>
+
+<span class="c1">// UnmarshalGQL implements the graphql.Marshaler interface
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">y</span> <span class="o">*</span><span class="nx">YesNo</span><span class="p">)</span> <span class="nx">UnmarshalGQL</span><span class="p">(</span><span class="nx">v</span> <span class="kd">interface</span><span class="p">{})</span> <span class="kt">error</span> <span class="p">{</span>
+	<span class="nx">yes</span><span class="p">,</span> <span class="nx">ok</span> <span class="o">:=</span> <span class="nx">v</span><span class="p">.(</span><span class="kt">string</span><span class="p">)</span>
+	<span class="k">if</span> <span class="p">!</span><span class="nx">ok</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&#34;points must be strings&#34;</span><span class="p">)</span>
+	<span class="p">}</span>
+
+	<span class="k">if</span> <span class="nx">yes</span> <span class="o">==</span> <span class="s">&#34;yes&#34;</span> <span class="p">{</span>
+		<span class="o">*</span><span class="nx">y</span> <span class="p">=</span> <span class="kc">true</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="o">*</span><span class="nx">y</span> <span class="p">=</span> <span class="kc">false</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="kc">nil</span>
+<span class="p">}</span>
+
+<span class="c1">// MarshalGQL implements the graphql.Marshaler interface
+</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">y</span> <span class="nx">YesNo</span><span class="p">)</span> <span class="nx">MarshalGQL</span><span class="p">(</span><span class="nx">w</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="nx">y</span> <span class="p">{</span>
+		<span class="nx">w</span><span class="p">.</span><span class="nx">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">`&#34;yes&#34;`</span><span class="p">))</span>
+	<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+		<span class="nx">w</span><span class="p">.</span><span class="nx">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">`&#34;no&#34;`</span><span class="p">))</span>
+	<span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+<p>and then in types.json point to the name without the Marshal|Unmarshal in front:</p>
+<div class="highlight"><pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&#34;YesNo&#34;</span><span class="p">:</span> <span class="s2">&#34;github.com/me/mypkg.YesNo&#34;</span>
+<span class="p">}</span></code></pre></div>
+<h2 id="custom-scalars-for-types-you-don-t-control">Custom scalars for types you don&rsquo;t control</h2>
+
+<p>Sometimes you cant add methods to a type because its in another repo, part of the standard
+library (eg string or time.Time). To do this we can build an external marshaler:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kn">package</span> <span class="nx">mypkg</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;io&#34;</span>
+	<span class="s">&#34;strings&#34;</span>
+	
+	<span class="s">&#34;github.com/vektah/gqlgen/graphql&#34;</span>
+<span class="p">)</span>
+
+
+<span class="kd">func</span> <span class="nx">MarshalMyCustomBooleanScalar</span><span class="p">(</span><span class="nx">b</span> <span class="kt">bool</span><span class="p">)</span> <span class="nx">graphql</span><span class="p">.</span><span class="nx">Marshaler</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">graphql</span><span class="p">.</span><span class="nx">WriterFunc</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">io</span><span class="p">.</span><span class="nx">Writer</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="nx">b</span> <span class="p">{</span>
+			<span class="nx">w</span><span class="p">.</span><span class="nx">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;true&#34;</span><span class="p">))</span>
+		<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+			<span class="nx">w</span><span class="p">.</span><span class="nx">Write</span><span class="p">([]</span><span class="nb">byte</span><span class="p">(</span><span class="s">&#34;false&#34;</span><span class="p">))</span>
+		<span class="p">}</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="nx">UnmarshalMyCustomBooleanScalar</span><span class="p">(</span><span class="nx">v</span> <span class="kd">interface</span><span class="p">{})</span> <span class="p">(</span><span class="kt">bool</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">switch</span> <span class="nx">v</span> <span class="o">:=</span> <span class="nx">v</span><span class="p">.(</span><span class="kd">type</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">case</span> <span class="kt">string</span><span class="p">:</span>
+		<span class="k">return</span> <span class="s">&#34;true&#34;</span> <span class="o">==</span> <span class="nx">strings</span><span class="p">.</span><span class="nx">ToLower</span><span class="p">(</span><span class="nx">v</span><span class="p">),</span> <span class="kc">nil</span>
+	<span class="k">case</span> <span class="kt">int</span><span class="p">:</span>
+		<span class="k">return</span> <span class="nx">v</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="k">case</span> <span class="kt">bool</span><span class="p">:</span>
+		<span class="k">return</span> <span class="nx">v</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="k">default</span><span class="p">:</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">,</span> <span class="nx">fmt</span><span class="p">.</span><span class="nx">Errorf</span><span class="p">(</span><span class="s">&#34;%T is not a bool&#34;</span><span class="p">,</span> <span class="nx">v</span><span class="p">)</span>
+	<span class="p">}</span>
+<span class="p">}</span></code></pre></div>
+<p>and then in types.json point to the name without the Marshal|Unmarshal in front:</p>
+<div class="highlight"><pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
+    <span class="nt">&#34;MyCustomBooleanScalar&#34;</span><span class="p">:</span> <span class="s2">&#34;github.com/me/mypkg.MyCustomBooleanScalar&#34;</span>
+<span class="p">}</span></code></pre></div>
+<p>see the <a href="https://github.com/vektah/gqlgen/tree/master/example/scalars">example/scalars</a> package for more examples.</p>
+
+    </main>
+
+	<footer>
+	&copy; 2018 <a href="https://github.com/vektah">Adam Scarr</a>
+	</footer>
+</body>
+</html>

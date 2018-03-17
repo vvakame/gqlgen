@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Introduction on gqlgen</title>
-    <link>https://vektah.github.io/gqlgen/</link>
-    <description>Recent content in Introduction on gqlgen</description>
+    <title>References on gqlgen</title>
+    <link>https://vektah.github.io/gqlgen/reference/</link>
+    <description>Recent content in References on gqlgen</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Sat, 17 Mar 2018 13:06:47 +1100</lastBuildDate>
     
-	<atom:link href="https://vektah.github.io/gqlgen/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="https://vektah.github.io/gqlgen/reference/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -19,17 +19,6 @@
       <description>There are two different ways to implement scalars in gqlgen, depending on your need.
 With user defined types For user defined types you can implement the graphql.Marshal and graphql.Unmarshal interfaces and they will be called.
 package mypkg import ( &amp;#34;fmt&amp;#34; &amp;#34;io&amp;#34; &amp;#34;strings&amp;#34; ) type YesNo bool // UnmarshalGQL implements the graphql.Marshaler interface func (y *YesNo) UnmarshalGQL(v interface{}) error { yes, ok := v.(string) if !ok { return fmt.Errorf(&amp;#34;points must be strings&amp;#34;) } if yes == &amp;#34;yes&amp;#34; { *y = true } else { *y = false } return nil } // MarshalGQL implements the graphql.</description>
-    </item>
-    
-    <item>
-      <title>Getting Started</title>
-      <link>https://vektah.github.io/gqlgen/tutorial/getting-started/</link>
-      <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
-      
-      <guid>https://vektah.github.io/gqlgen/tutorial/getting-started/</guid>
-      <description>Goal The aim for this tutorial is to build a &amp;ldquo;todo&amp;rdquo; graphql server that can:
- get a list of all todos create new todos mark off todos as they are completed  Install gqlgen Assuming you already have a working go environment you can simply go get:
-go get github.com/vektah/gqlgen Define the schema gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql Schema Definition Language.</description>
     </item>
     
   </channel>
