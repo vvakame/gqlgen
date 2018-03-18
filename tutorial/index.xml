@@ -17,7 +17,8 @@
       
       <guid>https://vektah.github.io/gqlgen/tutorial/getting-started/</guid>
       <description>Goal The aim for this tutorial is to build a &amp;ldquo;todo&amp;rdquo; graphql server that can:
- get a list of all todos create new todos mark off todos as they are completed  Install gqlgen Assuming you already have a working go environment you can simply go get:
+ get a list of all todos create new todos mark off todos as they are completed  You can find the finished code for this tutorial here
+Install gqlgen Assuming you already have a working go environment you can simply go get:
 go get github.com/vektah/gqlgen Define the schema gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql Schema Definition Language.</description>
     </item>
     

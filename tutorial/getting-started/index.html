@@ -69,6 +69,8 @@
 <li>mark off todos as they are completed</li>
 </ul>
 
+<p>You can find the finished code for this tutorial <a href="https://github.com/vektah/gqlgen-tutorials/tree/master/gettingstarted">here</a></p>
+
 <h2 id="install-gqlgen">Install gqlgen</h2>
 
 <p>Assuming you already have a working <a href="https://golang.org/doc/install">go environment</a> you can simply go get:</p>
@@ -99,9 +101,11 @@ type Mutation {
 <h2 id="generate-the-bindings">Generate the bindings</h2>
 
 <p>Now that we have defined the shape of our data, and what actions can be taken we can ask gqlgen to convert the schema into code:</p>
-<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gqlgen -out generated.go -package main</code></pre></div>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">mkdir graph
+<span class="nb">cd</span> graph
+gqlgen -schema ../schema.graphql</code></pre></div>
 <p>gqlgen should have created two new files <code>generated.go</code> and <code>models_gen.go</code>. If we take a peek in both we can see what the server has generated:</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// generated.go
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// graph/generated.go
 </span><span class="c1"></span><span class="kd">func</span> <span class="nx">MakeExecutableSchema</span><span class="p">(</span><span class="nx">resolvers</span> <span class="nx">Resolvers</span><span class="p">)</span> <span class="nx">graphql</span><span class="p">.</span><span class="nx">ExecutableSchema</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">executableSchema</span><span class="p">{</span><span class="nx">resolvers</span><span class="p">}</span>
 <span class="p">}</span>
@@ -112,7 +116,7 @@ type Mutation {
 	<span class="nx">Todo_user</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">it</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span>
 <span class="p">}</span>
 
-<span class="c1">// models_gen.go
+<span class="c1">// graph/models_gen.go
 </span><span class="c1"></span><span class="kd">type</span> <span class="nx">Todo</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">ID</span>     <span class="kt">string</span>
 	<span class="nx">Text</span>   <span class="kt">string</span>
@@ -132,23 +136,19 @@ directly.</p>
 <h2 id="write-the-resolvers">Write the resolvers</h2>
 
 <p>Finally, we get to write some code!</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// main.go
-</span><span class="c1"></span><span class="kn">package</span> <span class="nx">main</span>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// graph/graph.go
+</span><span class="c1"></span><span class="kn">package</span> <span class="nx">graph</span>
 
 <span class="kn">import</span> <span class="p">(</span>
 	<span class="s">&#34;context&#34;</span>
 	<span class="s">&#34;fmt&#34;</span>
-	<span class="s">&#34;log&#34;</span>
 	<span class="s">&#34;math/rand&#34;</span>
-	<span class="s">&#34;net/http&#34;</span>
-
-	<span class="s">&#34;github.com/vektah/gqlgen/handler&#34;</span>
 <span class="p">)</span>
 
 <span class="kd">type</span> <span class="nx">MyApp</span> <span class="kd">struct</span> <span class="p">{</span>
 	<span class="nx">todos</span> <span class="p">[]</span><span class="nx">Todo</span>
 <span class="p">}</span>
- 
+
 <span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">MyApp</span><span class="p">)</span> <span class="nx">Query_todos</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span> <span class="p">([]</span><span class="nx">Todo</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nx">a</span><span class="p">.</span><span class="nx">todos</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
@@ -163,17 +163,24 @@ directly.</p>
 	<span class="k">return</span> <span class="nx">todo</span><span class="p">,</span> <span class="kc">nil</span>
 <span class="p">}</span>
 
-
 <span class="kd">func</span> <span class="p">(</span><span class="nx">a</span> <span class="o">*</span><span class="nx">MyApp</span><span class="p">)</span> <span class="nx">Todo_user</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">it</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
 	<span class="k">return</span> <span class="nx">User</span><span class="p">{</span><span class="nx">ID</span><span class="p">:</span> <span class="nx">it</span><span class="p">.</span><span class="nx">UserID</span><span class="p">,</span> <span class="nx">Name</span><span class="p">:</span> <span class="s">&#34;user &#34;</span> <span class="o">+</span> <span class="nx">it</span><span class="p">.</span><span class="nx">UserID</span><span class="p">},</span> <span class="kc">nil</span>
-<span class="p">}</span>
+<span class="p">}</span></code></pre></div><div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// main.go
+</span><span class="c1"></span><span class="kn">package</span> <span class="nx">main</span>
+
+<span class="kn">import</span> <span class="p">(</span>
+	<span class="s">&#34;fmt&#34;</span>
+	<span class="s">&#34;log&#34;</span>
+	<span class="s">&#34;net/http&#34;</span>
+
+	<span class="s">&#34;github.com/vektah/gqlgen-tutorials/gettingstarted/graph&#34;</span>
+	<span class="s">&#34;github.com/vektah/gqlgen/handler&#34;</span>
+<span class="p">)</span>
 
 <span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
-	<span class="nx">app</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">MyApp</span><span class="p">{</span>
-		<span class="nx">todos</span><span class="p">:</span> <span class="p">[]</span><span class="nx">Todo</span><span class="p">{},</span> <span class="c1">// this would normally be a reference to the db
-</span><span class="c1"></span>	<span class="p">}</span>
+	<span class="nx">app</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">graph</span><span class="p">.</span><span class="nx">MyApp</span><span class="p">{}</span>
 	<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">&#34;/&#34;</span><span class="p">,</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">Playground</span><span class="p">(</span><span class="s">&#34;Todo&#34;</span><span class="p">,</span> <span class="s">&#34;/query&#34;</span><span class="p">))</span>
-	<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">&#34;/query&#34;</span><span class="p">,</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">GraphQL</span><span class="p">(</span><span class="nx">MakeExecutableSchema</span><span class="p">(</span><span class="nx">app</span><span class="p">)))</span>
+	<span class="nx">http</span><span class="p">.</span><span class="nx">Handle</span><span class="p">(</span><span class="s">&#34;/query&#34;</span><span class="p">,</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">GraphQL</span><span class="p">(</span><span class="nx">graph</span><span class="p">.</span><span class="nx">MakeExecutableSchema</span><span class="p">(</span><span class="nx">app</span><span class="p">)))</span>
 
 	<span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="s">&#34;Listening on :8080&#34;</span><span class="p">)</span>
 	<span class="nx">log</span><span class="p">.</span><span class="nx">Fatal</span><span class="p">(</span><span class="nx">http</span><span class="p">.</span><span class="nx">ListenAndServe</span><span class="p">(</span><span class="s">&#34;:8080&#34;</span><span class="p">,</span> <span class="kc">nil</span><span class="p">))</span>
@@ -203,24 +210,18 @@ query findTodos {
 <h2 id="customizing-the-models">Customizing the models</h2>
 
 <p>Generated models are nice to get moving quickly, but you probably want control over them at some point. To do that
-create a types.json, eg:</p>
+create a <code>graph/types.json</code>:</p>
 <div class="highlight"><pre class="chroma"><code class="language-json" data-lang="json"><span class="p">{</span>
-  <span class="nt">&#34;Todo&#34;</span><span class="p">:</span> <span class="s2">&#34;github.com/vektah/gettingstarted.Todo&#34;</span>
+  <span class="nt">&#34;User&#34;</span><span class="p">:</span> <span class="s2">&#34;github.com/vektah/gqlgen-tutorials/gettingstarted/graph.User&#34;</span>
 <span class="p">}</span></code></pre></div>
 <p>and create the model yourself:</p>
-<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">type</span> <span class="nx">Todo</span> <span class="kd">struct</span> <span class="p">{</span>
-	<span class="nx">ID</span>     <span class="kt">string</span>
-	<span class="nx">Text</span>   <span class="kt">string</span>
-	<span class="nx">done</span>   <span class="kt">bool</span>
-	<span class="nx">userID</span> <span class="kt">string</span> <span class="c1">// I&#39;ve made userID private now.
-</span><span class="c1"></span><span class="p">}</span>
-
-<span class="c1">// lets define a getter too. it could also return an error if we needed. 
-</span><span class="c1"></span><span class="kd">func</span> <span class="p">(</span><span class="nx">t</span> <span class="nx">Todo</span><span class="p">)</span> <span class="nx">Done</span><span class="p">()</span> <span class="kt">bool</span> <span class="p">{</span>
-	<span class="k">return</span> <span class="nx">t</span><span class="p">.</span><span class="nx">done</span>
-<span class="p">}</span> </code></pre></div>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="c1">// graph/graph.go
+</span><span class="c1"></span><span class="kd">type</span> <span class="nx">User</span> <span class="kd">struct</span> <span class="p">{</span>
+	<span class="nx">ID</span>   <span class="kt">string</span>
+	<span class="nx">Name</span> <span class="kt">string</span>
+<span class="p">}</span></code></pre></div>
 <p>then regenerate, this time specifying the type map:</p>
-<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gqlgen -out generated.go -package main -typemap types.json</code></pre></div>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">gqlgen -typemap types.json -schema ../schema.graphql</code></pre></div>
 <p>gqlgen will look at the user defined types and match the fields up finding fields and functions by matching names.</p>
 
 <h2 id="finishing-touches">Finishing touches</h2>
