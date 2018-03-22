@@ -5,20 +5,31 @@
     <link>https://vektah.github.io/gqlgen/reference/</link>
     <description>Recent content in References on gqlgen</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 17 Mar 2018 13:06:47 +1100</lastBuildDate>
     
 	<atom:link href="https://vektah.github.io/gqlgen/reference/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
-      <title>Custom Scalars</title>
+      <title>Using custom graphql types in golang</title>
       <link>https://vektah.github.io/gqlgen/reference/scalars/</link>
-      <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://vektah.github.io/gqlgen/reference/scalars/</guid>
       <description>There are two different ways to implement scalars in gqlgen, depending on your need.
 With user defined types For user defined types you can implement the graphql.Marshal and graphql.Unmarshal interfaces and they will be called.
 package mypkg import ( &amp;#34;fmt&amp;#34; &amp;#34;io&amp;#34; &amp;#34;strings&amp;#34; ) type YesNo bool // UnmarshalGQL implements the graphql.Marshaler interface func (y *YesNo) UnmarshalGQL(v interface{}) error { yes, ok := v.(string) if !ok { return fmt.Errorf(&amp;#34;points must be strings&amp;#34;) } if yes == &amp;#34;yes&amp;#34; { *y = true } else { *y = false } return nil } // MarshalGQL implements the graphql.</description>
+    </item>
+    
+    <item>
+      <title>Optimizing N&#43;1 database queries using Dataloaders</title>
+      <link>https://vektah.github.io/gqlgen/reference/dataloaders/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://vektah.github.io/gqlgen/reference/dataloaders/</guid>
+      <description>Have you noticed some GraphQL queries end can make hundreds of database queries, often with mostly repeated data? Lets take a look why and how to fix it.
+Query Resolution Imagine if you had a simple query like this:
+query { todos { users { name } } and our todo.user resolver looks like this:
+func (r *Resolver) Todo_user(ctx context.Context, obj *Todo) (*User, error) { res := logAndQuery(r.db, &amp;#34;SELECT id, name FROM user WHERE id = ?</description>
     </item>
     
   </channel>

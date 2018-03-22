@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head >
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9"/>
+		<meta name="description" content="Speeding up your GraphQL requests by reducing the number of round trips to the database.">
+
+ 	<title>Optimizing N&#43;1 database queries using Dataloaders &mdash; gqlgen</title>
+
+		<link href="https://fonts.googleapis.com/css?family=Quicksand:400,700|Space+Mono|VT323" rel="stylesheet">
+	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/main.css" type="text/css"/>
+	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/syntax.css" type="text/css"/>
+</head>
+
+<body>
+	<nav>
+	<a class="logo" href="http://github.com/vektah/gqlgen">gqlgen</a>
+
+	<ul class="menu">
+	
+		<li class="">
+			
+				<a href="/gqlgen/introduction/">Introduction</a>
+			
+		</li>
+		<li class="">
+			
+				<a href="/gqlgen/getting-started/">Getting Started</a>
+			
+		</li>
+		<li class="">
+			
+				<a href="/gqlgen/reference/scalars/">Custom Scalars</a>
+			
+		</li>
+		<li class="active">
+			
+				<a href="/gqlgen/reference/dataloaders/">Dataloaders</a>
+			
+		</li>
+	</ul>
+</nav>
+
+		
+    <header>
+        <div class="content">
+            <a class="header-link"
+               target="_blank"
+               href="https://github.com/vektah/gqlgen/blob/master/docs/content/reference/dataloaders.md">
+                [edit]
+            </a>
+            <h1>Dataloaders</h1>
+            <div class="description">Optimizing N&#43;1 database queries using Dataloaders</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="content">
+            
+
+<p>Have you noticed some GraphQL queries end can make hundreds of database
+queries, often with mostly repeated data? Lets take a look why and how to
+fix it.</p>
+
+<h2 id="query-resolution">Query Resolution</h2>
+
+<p>Imagine if you had a simple query like this:</p>
+<div class="highlight"><pre class="chroma"><code class="language-graphql" data-lang="graphql">query { todos { users { name } }</code></pre></div>
+<p>and our todo.user resolver looks like this:</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">Resolver</span><span class="p">)</span> <span class="nx">Todo_user</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">obj</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="nx">res</span> <span class="o">:=</span> <span class="nx">logAndQuery</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">db</span><span class="p">,</span> <span class="s">&#34;SELECT id, name FROM user WHERE id = ?&#34;</span><span class="p">,</span> <span class="nx">obj</span><span class="p">.</span><span class="nx">UserID</span><span class="p">)</span>
+	<span class="k">defer</span> <span class="nx">res</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+	<span class="k">if</span> <span class="p">!</span><span class="nx">res</span><span class="p">.</span><span class="nx">Next</span><span class="p">()</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="kc">nil</span><span class="p">,</span> <span class="kc">nil</span>
+	<span class="p">}</span>
+	<span class="kd">var</span> <span class="nx">user</span> <span class="nx">User</span>
+	<span class="k">if</span> <span class="nx">err</span> <span class="o">:=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">Scan</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">user</span><span class="p">.</span><span class="nx">ID</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">user</span><span class="p">.</span><span class="nx">Name</span><span class="p">);</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+		<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="o">&amp;</span><span class="nx">user</span><span class="p">,</span> <span class="kc">nil</span>
+<span class="p">}</span></code></pre></div>
+<p><strong>Note</strong>: I&rsquo;m going to use go&rsquo;s low level <code>sql.DB</code> here. All of this will
+work with whatever your favourite ORM is.</p>
+
+<p>The query executor will call the Query_todos resolver which does a <code>select * from todo</code> and
+return N todos. Then for each of the todos, concurrently, call the Todo_user resolver,
+<code>SELECT from USER where id = todo.id</code>.</p>
+
+<p>eg:</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">todo</span><span class="p">,</span> <span class="n">user_id</span> <span class="k">FROM</span> <span class="n">todo</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">FROM</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="o">=</span> <span class="o">?</span></code></pre></div>
+<p>Whats even worse? most of those todos are all owned by the same user! We can do better than this.</p>
+
+<h2 id="dataloader">Dataloader</h2>
+
+<p>What we need is a way to group up all of those concurrent requests, take out any duplicates, and
+store them in case they are needed later on in request. The dataloader is just that, a request-scoped
+batching and caching solution popularised by <a href="https://github.com/facebook/dataloader">facebook</a>.</p>
+
+<p>We&rsquo;re going to use <a href="ttps://github.com/vektah/dataloaden">dataloaden</a> to build our dataloaders.
+In languages with generics, we could probably just create a DataLoader<User>, but golang
+doesnt have generics. Instead we generate the code manually for our instance.</p>
+<div class="highlight"><pre class="chroma"><code class="language-bash" data-lang="bash">go get github.com/vektah/dataloaden
+
+dataloaden github.com/full/package/name.User</code></pre></div>
+<p>Next we need to create an instance of our new dataloader and tell how to fetch data.
+Because dataloaders are request scoped, they are a good fit for <code>context</code>.</p>
+<div class="highlight"><pre class="chroma"><code class="language-go" data-lang="go"><span class="kd">const</span> <span class="nx">userLoaderKey</span> <span class="p">=</span> <span class="s">&#34;userloader&#34;</span>
+
+<span class="kd">func</span> <span class="nx">DataloaderMiddleware</span><span class="p">(</span><span class="nx">db</span> <span class="o">*</span><span class="nx">sql</span><span class="p">.</span><span class="nx">DB</span><span class="p">,</span> <span class="nx">next</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span><span class="p">)</span> <span class="nx">http</span><span class="p">.</span><span class="nx">Handler</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">http</span><span class="p">.</span><span class="nx">HandlerFunc</span><span class="p">(</span><span class="kd">func</span><span class="p">(</span><span class="nx">w</span> <span class="nx">http</span><span class="p">.</span><span class="nx">ResponseWriter</span><span class="p">,</span> <span class="nx">r</span> <span class="o">*</span><span class="nx">http</span><span class="p">.</span><span class="nx">Request</span><span class="p">)</span> <span class="p">{</span>
+		<span class="nx">userloader</span> <span class="o">:=</span> <span class="nx">UserLoader</span><span class="p">{</span>
+			<span class="nx">maxBatch</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span>
+			<span class="nx">wait</span><span class="p">:</span>     <span class="mi">1</span> <span class="o">*</span> <span class="nx">time</span><span class="p">.</span><span class="nx">Millisecond</span><span class="p">,</span>
+			<span class="nx">fetch</span><span class="p">:</span> <span class="kd">func</span><span class="p">(</span><span class="nx">ids</span> <span class="p">[]</span><span class="kt">int</span><span class="p">)</span> <span class="p">([]</span><span class="o">*</span><span class="nx">User</span><span class="p">,</span> <span class="p">[]</span><span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+				<span class="nx">placeholders</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="kt">string</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ids</span><span class="p">))</span>
+				<span class="nx">args</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="kd">interface</span><span class="p">{},</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ids</span><span class="p">))</span>
+				<span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ids</span><span class="p">);</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+					<span class="nx">placeholders</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="s">&#34;?&#34;</span>
+					<span class="nx">args</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="nx">i</span>
+				<span class="p">}</span>
+
+				<span class="nx">res</span> <span class="o">:=</span> <span class="nx">logAndQuery</span><span class="p">(</span><span class="nx">db</span><span class="p">,</span>
+					<span class="s">&#34;SELECT id, name from user WHERE id IN (&#34;</span><span class="o">+</span>
+						<span class="nx">strings</span><span class="p">.</span><span class="nx">Join</span><span class="p">(</span><span class="nx">placeholders</span><span class="p">,</span> <span class="s">&#34;,&#34;</span><span class="p">)</span><span class="o">+</span><span class="s">&#34;)&#34;</span><span class="p">,</span>
+					<span class="nx">args</span><span class="o">...</span><span class="p">,</span>
+				<span class="p">)</span>
+				
+				<span class="k">defer</span> <span class="nx">res</span><span class="p">.</span><span class="nx">Close</span><span class="p">()</span>
+
+				<span class="nx">users</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">([]</span><span class="o">*</span><span class="nx">User</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nx">ids</span><span class="p">))</span>
+				<span class="nx">i</span> <span class="o">:=</span> <span class="mi">0</span>
+				<span class="k">for</span> <span class="nx">res</span><span class="p">.</span><span class="nx">Next</span><span class="p">()</span> <span class="p">{</span>
+					<span class="nx">users</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="p">=</span> <span class="o">&amp;</span><span class="nx">User</span><span class="p">{}</span>
+					<span class="nx">err</span> <span class="o">:=</span> <span class="nx">res</span><span class="p">.</span><span class="nx">Scan</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">users</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">ID</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">users</span><span class="p">[</span><span class="nx">i</span><span class="p">].</span><span class="nx">Name</span><span class="p">)</span>
+					<span class="k">if</span> <span class="nx">err</span> <span class="o">!=</span> <span class="kc">nil</span> <span class="p">{</span>
+						<span class="nb">panic</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+					<span class="p">}</span>
+					<span class="nx">i</span><span class="o">++</span>
+				<span class="p">}</span>
+
+				<span class="k">return</span> <span class="nx">users</span><span class="p">,</span> <span class="kc">nil</span>
+			<span class="p">},</span>
+		<span class="p">}</span>
+		<span class="nx">ctx</span> <span class="o">:=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">WithValue</span><span class="p">(</span><span class="nx">r</span><span class="p">.</span><span class="nx">Context</span><span class="p">(),</span> <span class="nx">userLoaderKey</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">userloader</span><span class="p">)</span>
+		<span class="nx">r</span> <span class="p">=</span> <span class="nx">r</span><span class="p">.</span><span class="nx">WithContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">)</span>
+		<span class="nx">next</span><span class="p">.</span><span class="nx">ServeHTTP</span><span class="p">(</span><span class="nx">w</span><span class="p">,</span> <span class="nx">r</span><span class="p">)</span>
+	<span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">func</span> <span class="p">(</span><span class="nx">r</span> <span class="o">*</span><span class="nx">Resolver</span><span class="p">)</span> <span class="nx">Todo_userLoader</span><span class="p">(</span><span class="nx">ctx</span> <span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span> <span class="nx">obj</span> <span class="o">*</span><span class="nx">Todo</span><span class="p">)</span> <span class="p">(</span><span class="o">*</span><span class="nx">User</span><span class="p">,</span> <span class="kt">error</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="nx">ctx</span><span class="p">.</span><span class="nx">Value</span><span class="p">(</span><span class="nx">userLoaderKey</span><span class="p">).(</span><span class="o">*</span><span class="nx">UserLoader</span><span class="p">).</span><span class="nx">Load</span><span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">UserID</span><span class="p">)</span>
+<span class="p">}</span></code></pre></div>
+<p>This dataloader will wait for up to 1 millisecond to get 100 unique requests and then call
+the fetch function. This function is a little ugly, but half of it is just building the SQL!</p>
+
+<p>The end result? just 2 queries!</p>
+<div class="highlight"><pre class="chroma"><code class="language-sql" data-lang="sql"><span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">todo</span><span class="p">,</span> <span class="n">user_id</span> <span class="k">FROM</span> <span class="n">todo</span>
+<span class="k">SELECT</span> <span class="n">id</span><span class="p">,</span> <span class="n">name</span> <span class="k">from</span> <span class="k">user</span> <span class="k">WHERE</span> <span class="n">id</span> <span class="k">IN</span> <span class="p">(</span><span class="o">?</span><span class="p">,</span><span class="o">?</span><span class="p">,</span><span class="o">?</span><span class="p">,</span><span class="o">?</span><span class="p">,</span><span class="o">?</span><span class="p">)</span></code></pre></div>
+<p>The generated UserLoader has a few other useful methods on it:</p>
+
+<ul>
+<li><code>LoadAll(keys)</code>: If you know up front you want a bunch users</li>
+<li><code>Prime(key, user)</code>: Used to sync state between similar loaders (usersById, usersByNote)</li>
+</ul>
+
+<p>You can see the full working example <a href="https://github.com/vektah/gqlgen-tutorials/tree/master/dataloader">here</a></p>
+
+        </div>
+    </main>
+
+	<footer>
+	&copy; 2018 <a href="https://github.com/vektah">Adam Scarr</a>
+	</footer>
+</body>
+</html>

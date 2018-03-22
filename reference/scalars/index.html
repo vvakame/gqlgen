@@ -3,11 +3,11 @@
 <head >
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 	<meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9"/>
-	<meta name="description" content="graphql servers the easy way">
+		<meta name="description" content="Defining custom GraphQL scalar types using gqlgen">
 
-	<title>Custom Scalars &mdash; gqlgen</title>
+ 	<title>Using custom graphql types in golang &mdash; gqlgen</title>
 
-    <link href="https://fonts.googleapis.com/css?family=Quicksand:400,700|Space+Mono|VT323" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Quicksand:400,700|Space+Mono|VT323" rel="stylesheet">
 	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/main.css" type="text/css"/>
 	<link rel="stylesheet" href="https://vektah.github.io/gqlgen/syntax.css" type="text/css"/>
 </head>
@@ -18,46 +18,45 @@
 
 	<ul class="menu">
 	
-		<li>
+		<li class="">
 			
-				<a href="/gqlgen/">Introduction</a>
+				<a href="/gqlgen/introduction/">Introduction</a>
 			
 		</li>
-		<li>
+		<li class="">
 			
-				<span>Tutorials</span>
+				<a href="/gqlgen/getting-started/">Getting Started</a>
 			
-			<ul class="submenu">
-				<li>
-					
-						<a href="/gqlgen/tutorial/getting-started/">Getting Started</a>
-					
-				</li>
-			</ul>
 		</li>
-		<li>
+		<li class="active">
 			
-				<span>Reference</span>
+				<a href="/gqlgen/reference/scalars/">Custom Scalars</a>
 			
-			<ul class="submenu">
-				<li>
-					
-						<a href="/gqlgen/reference/scalars/">Custom Scalars</a>
-					
-				</li>
-			</ul>
+		</li>
+		<li class="">
+			
+				<a href="/gqlgen/reference/dataloaders/">Dataloaders</a>
+			
 		</li>
 	</ul>
 </nav>
 
-    
+		
     <header>
-        <h1>Custom Scalars</h1>
-        <span class="description">Using custom graphql types in golang</span>
+        <div class="content">
+            <a class="header-link"
+               target="_blank"
+               href="https://github.com/vektah/gqlgen/blob/master/docs/content/reference/scalars.md">
+                [edit]
+            </a>
+            <h1>Custom Scalars</h1>
+            <div class="description">Using custom graphql types in golang</div>
+        </div>
     </header>
 
     <main>
-        
+        <div class="content">
+            
 
 <p>There are two different ways to implement scalars in gqlgen, depending on your need.</p>
 
@@ -144,6 +143,7 @@ library (eg string or time.Time). To do this we can build an external marshaler:
 <span class="p">}</span></code></pre></div>
 <p>see the <a href="https://github.com/vektah/gqlgen/tree/master/example/scalars">example/scalars</a> package for more examples.</p>
 
+        </div>
     </main>
 
 	<footer>

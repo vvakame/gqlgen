@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Introduction on gqlgen</title>
+    <title>gqlgen</title>
     <link>https://vektah.github.io/gqlgen/</link>
-    <description>Recent content in Introduction on gqlgen</description>
+    <description>Recent content on gqlgen</description>
     <generator>Hugo -- gohugo.io</generator>
     <lastBuildDate>Sat, 17 Mar 2018 13:06:47 +1100</lastBuildDate>
     
@@ -11,9 +11,32 @@
     
     
     <item>
-      <title>Custom Scalars</title>
-      <link>https://vektah.github.io/gqlgen/reference/scalars/</link>
+      <title>Type-safe graphql for golang</title>
+      <link>https://vektah.github.io/gqlgen/introduction/</link>
       <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
+      
+      <guid>https://vektah.github.io/gqlgen/introduction/</guid>
+      <description>What is gqlgen? gqlgen is golang library for building graphql servers without any fuss. gqlgen is:
+ Schema first: You define your API using the graphql Schema Definition Language Type safe: You should never see map[string]interface{} here. Codegen: Let us generate the boring bits, so you can build your app quickly.  Getting started First take a look at the Getting Started tutorial.
+If you cant find what your looking for, maybe the examples will help.</description>
+    </item>
+    
+    <item>
+      <title>Building graphql servers in golang</title>
+      <link>https://vektah.github.io/gqlgen/getting-started/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://vektah.github.io/gqlgen/getting-started/</guid>
+      <description>Goal The aim for this tutorial is to build a &amp;ldquo;todo&amp;rdquo; graphql server that can:
+ get a list of all todos create new todos mark off todos as they are completed  You can find the finished code for this tutorial here
+Install gqlgen Assuming you already have a working go environment you can simply go get:
+go get github.com/vektah/gqlgen Define the schema gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql Schema Definition Language.</description>
+    </item>
+    
+    <item>
+      <title>Using custom graphql types in golang</title>
+      <link>https://vektah.github.io/gqlgen/reference/scalars/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://vektah.github.io/gqlgen/reference/scalars/</guid>
       <description>There are two different ways to implement scalars in gqlgen, depending on your need.
@@ -22,15 +45,15 @@ package mypkg import ( &amp;#34;fmt&amp;#34; &amp;#34;io&amp;#34; &amp;#34;strin
     </item>
     
     <item>
-      <title>Getting Started</title>
-      <link>https://vektah.github.io/gqlgen/tutorial/getting-started/</link>
-      <pubDate>Sat, 17 Mar 2018 13:06:47 +1100</pubDate>
+      <title>Optimizing N&#43;1 database queries using Dataloaders</title>
+      <link>https://vektah.github.io/gqlgen/reference/dataloaders/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://vektah.github.io/gqlgen/tutorial/getting-started/</guid>
-      <description>Goal The aim for this tutorial is to build a &amp;ldquo;todo&amp;rdquo; graphql server that can:
- get a list of all todos create new todos mark off todos as they are completed  You can find the finished code for this tutorial here
-Install gqlgen Assuming you already have a working go environment you can simply go get:
-go get github.com/vektah/gqlgen Define the schema gqlgen is a schema-first library, so before touching any code we write out the API we want using the graphql Schema Definition Language.</description>
+      <guid>https://vektah.github.io/gqlgen/reference/dataloaders/</guid>
+      <description>Have you noticed some GraphQL queries end can make hundreds of database queries, often with mostly repeated data? Lets take a look why and how to fix it.
+Query Resolution Imagine if you had a simple query like this:
+query { todos { users { name } } and our todo.user resolver looks like this:
+func (r *Resolver) Todo_user(ctx context.Context, obj *Todo) (*User, error) { res := logAndQuery(r.db, &amp;#34;SELECT id, name FROM user WHERE id = ?</description>
     </item>
     
   </channel>
