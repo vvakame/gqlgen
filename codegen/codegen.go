@@ -58,18 +58,43 @@ func (tm TypeMap) Check() error {
 		if entry.EntityPath == "" {
 			return fmt.Errorf("entity #%d: entityPath is not defined", idx+1)
 		}
+		if err := entry.Fields.Check(); err != nil {
+			return fmt.Errorf("entity #%d: %s", idx+1, err.Error())
+		}
 	}
 	return nil
 }
 
 type TypeMapEntry struct {
-	TypeName   string `yaml:"typeName"`
-	EntityPath string `yaml:"entityPath"`
-	Fields     []TypeMapField
+	TypeName   string       `yaml:"typeName"`
+	EntityPath string       `yaml:"entityPath"`
+	Fields     TypeFieldMap `yaml:"fields"`
+}
+
+type TypeFieldMap []TypeMapField
+
+func (tfm TypeFieldMap) Get(fieldName string) *TypeMapField {
+	for _, field := range tfm {
+		if field.FieldName == fieldName {
+			return &field
+		}
+	}
+
+	return nil
+}
+
+func (tfm TypeFieldMap) Check() error {
+	for idx, field := range tfm {
+		if field.FieldName == "" {
+			return fmt.Errorf("field #%d: fieldName is not defined", idx+1)
+		}
+	}
+	return nil
 }
 
 type TypeMapField struct {
 	FieldName string `yaml:"fieldName"`
+	Resolver  bool   `yaml:"resolver"`
 }
 
 func Generate(cfg Config) error {

@@ -6,3 +6,6 @@
 
 - typeName:   User
   entityPath: remote_api.User
+  fields:
+  - fieldName: likes
+    resolver:  true
